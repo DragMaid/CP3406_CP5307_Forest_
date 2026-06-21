@@ -23,6 +23,27 @@ fun TreeCanvas(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "TreeSway")
     
+    // Smooth swaying animation to bring the trees to life
+    val swayAngle by infiniteTransition.animateFloat(
+        initialValue = -1.5f,
+        targetValue = 1.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2500, easing = EaseInOutQuad),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "sway"
+    )
+
+    // Flowing petals animation for Cherry Blossom
+    val petalProgress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "petals"
+    )
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
