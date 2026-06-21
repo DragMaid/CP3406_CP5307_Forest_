@@ -246,7 +246,7 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
                     strokeCap = StrokeCap.Round
                 )
                 if (todayMinutes >= settings.dailyFocusGoalMinutes) {
-                    Text("🎉 Goal achieved! Keep growing your forest!", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text("Goal achieved! Keep growing your forest!", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -297,15 +297,15 @@ fun GardenScreen(viewModel: ForestViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    StatCard(title = "Mature Trees", value = "$totalTrees 🌲", modifier = Modifier.weight(1f))
-                    StatCard(title = "Focus Hours", value = String.format("%.1f hrs ⏱️", totalHours), modifier = Modifier.weight(1f))
+                    StatCard(title = "Mature Trees", value = "$totalTrees mature", modifier = Modifier.weight(1f))
+                    StatCard(title = "Focus Hours", value = String.format("%.1f hrs", totalHours), modifier = Modifier.weight(1f))
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    StatCard(title = "Current Streak", value = "$streak days 🔥", modifier = Modifier.weight(1f))
-                    StatCard(title = "Avg Sessions/Day", value = String.format("%.1f / day 📈", avgSessions), modifier = Modifier.weight(1f))
+                    StatCard(title = "Current Streak", value = "$streak days", modifier = Modifier.weight(1f))
+                    StatCard(title = "Avg Sessions/Day", value = String.format("%.1f / day", avgSessions), modifier = Modifier.weight(1f))
                 }
             }
         }
