@@ -67,7 +67,6 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
     val weatherCondition = _weatherCondition.asStateFlow()
 
     private val _isFetchingWeather = MutableStateFlow(false)
-    val isFetchingWeather = _isFetchingWeather.asStateFlow()
 
     private var timerJob: Job? = null
     private var weatherPollingJob: Job? = null
@@ -108,7 +107,7 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
             // Initial fetch
             fetchWeatherInternal(forceRefresh = true)
             while (true) {
-                delay(5 * 60 * 1000L)
+                delay((5 * 60 * 1000L).milliseconds)
                 fetchWeatherInternal(forceRefresh = true)
             }
         }
@@ -154,15 +153,6 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
         // ponytail: Cancelling a focus session does not advance the tree (requirement met)
         resetTimerToCurrentSession()
         prefs.saveTimerState(null)
-    }
-
-    fun skipFocusSession() {
-        if (_sessionType.value == SessionType.FOCUS) {
-            timerJob?.cancel()
-            _isTimerRunning.value = false
-            _isTimerPaused.value = false
-            onSessionComplete()
-        }
     }
 
     private fun onSessionComplete() {
@@ -467,19 +457,9 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
         return dates.size.toDouble() / daysBetween
     }
 
-    fun fetchWeather() {
-        fetchWeatherInternal(forceRefresh = false)
-    }
-
-    /**
-     * Attempt to fetch real-time weather using device location.
-     * For now this falls back to the simulated fetchWeather() when location
-     * access isn't available — keeps behaviour safe for builds without
-     * runtime permission handling. If location and network are available,
-     * one could plug in a real API call here.
-     */
-    fun fetchWeatherRealTime() {
-        fetchWeatherInternal(forceRefresh = true)
+    // TODO: this function is just a wrapper for nothing at all
+    fun fetchWeatherRealTime(forceRefresh: Boolean = true) {
+        fetchWeatherInternal(forceRefresh = forceRefresh)
     }
 
     private fun fetchWeatherInternal(forceRefresh: Boolean) {
@@ -498,9 +478,9 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
                 // Obtain last-known location (may throw if permissions missing)
                 val loc = try {
                     locationRepo.getCurrentLocation()
-                } catch (ex: SecurityException) {
+                } catch (_: SecurityException) {
                     null
-                } catch (ex: Exception) {
+                } catch (_: Exception) {
                     null
                 }
 

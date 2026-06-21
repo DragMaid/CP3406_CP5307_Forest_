@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 
 // ponytail: Static color scheme mapping for accent colors without using dynamic color APIs to maintain simplicity.
 
-private fun getAccentColors(colorName: String, isDark: Boolean): Triple<Color, Color, Color> {
+private fun getAccentColors(colorName: String): Triple<Color, Color, Color> {
     return when (colorName) {
         "Emerald Green" -> Triple(
             Color(0xFF00875A), // Primary
@@ -50,7 +50,7 @@ fun CP3406_CP5603UtilityAppStarterTemplateTheme(
     accentColorName: String = "Forest Green",
     content: @Composable () -> Unit
 ) {
-    val (primary, secondary, tertiary) = getAccentColors(accentColorName, darkTheme)
+    val (primary, secondary, tertiary) = getAccentColors(accentColorName)
     
     val colorScheme = if (darkTheme) {
         darkColorScheme(

@@ -29,7 +29,7 @@ class WeatherRepository(private val api: OpenMeteoApi) {
                     cacheTimestamp = System.currentTimeMillis()
                 }
                 return@withLock cond
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
                 // propagate null on error (caller should handle)
                 return@withLock null
             }

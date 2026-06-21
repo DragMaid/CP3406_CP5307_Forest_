@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
+import kotlin.math.cos
+import kotlin.math.sin
 
 // ponytail: Dynamic Canvas drawing with mathematical sway and particle calculations. Zero image files.
 
@@ -20,8 +22,8 @@ import androidx.compose.ui.unit.dp
 fun TreeCanvas(
     species: TreeSpecies,
     stage: TreeStage,
+    modifier: Modifier = Modifier,
     weather: WeatherCondition = WeatherCondition.SUNNY,
-    modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "TreeSway")
 
@@ -108,10 +110,10 @@ fun TreeCanvas(
             for (i in 0 until 8) {
                 val angle = i * 45
                 val rad = Math.toRadians(angle.toDouble())
-                val startX = sunCenter.x + (sunRadius + 3.dp.toPx()) * Math.cos(rad).toFloat()
-                val startY = sunCenter.y + (sunRadius + 3.dp.toPx()) * Math.sin(rad).toFloat()
-                val endX = sunCenter.x + (sunRadius + 8.dp.toPx()) * Math.cos(rad).toFloat()
-                val endY = sunCenter.y + (sunRadius + 8.dp.toPx()) * Math.sin(rad).toFloat()
+                val startX = sunCenter.x + (sunRadius + 3.dp.toPx()) * cos(rad).toFloat()
+                val startY = sunCenter.y + (sunRadius + 3.dp.toPx()) * sin(rad).toFloat()
+                val endX = sunCenter.x + (sunRadius + 8.dp.toPx()) * cos(rad).toFloat()
+                val endY = sunCenter.y + (sunRadius + 8.dp.toPx()) * sin(rad).toFloat()
                 drawLine(
                     color = Color(0xFFFBC02D),
                     start = Offset(startX, startY),
@@ -212,7 +214,7 @@ fun TreeCanvas(
                         size = Size(trunkWidth, trunkHeight)
                     )
                     if (species == TreeSpecies.BIRCH) {
-                        // Birch bark lines
+                        // Birchbark lines
                         drawLine(Color(0xFF333333), Offset(centerX - trunkWidth/2, groundY - 15.dp.toPx()), Offset(centerX, groundY - 15.dp.toPx()), strokeWidth = 1.dp.toPx())
                         drawLine(Color(0xFF333333), Offset(centerX, groundY - 30.dp.toPx()), Offset(centerX + trunkWidth/2, groundY - 30.dp.toPx()), strokeWidth = 1.dp.toPx())
                     }
@@ -298,7 +300,7 @@ fun TreeCanvas(
                     )
 
                     if (species == TreeSpecies.BIRCH) {
-                        // Birch bark details
+                        // Birchbark details
                         for (i in 1..6) {
                             val y = groundY - (i * 12).dp.toPx()
                             val left = i % 2 == 0
