@@ -59,6 +59,30 @@ fun TreeCanvas(
                     )
 
 
+        // Render falling Cherry Blossom petals on top of the ground
+        if (species == TreeSpecies.CHERRY_BLOSSOM && stage.ordinal >= TreeStage.YOUNG_TREE.ordinal) {
+            // Draw 4 animated petals floating downward
+            val petalColor = Color(0xFFF48FB1)
+            for (i in 1..4) {
+                // Determine animated coordinate offsets mathematically
+                val seedOffset = i * 0.25f
+                val currentPetalProgress = (petalProgress + seedOffset) % 1.0f
+                
+                val petalX = centerX - 60.dp.toPx() + (i * 30.dp.toPx() + currentPetalProgress * 20.dp.toPx()) % (120.dp.toPx())
+                val startY = groundY - 95.dp.toPx()
+                val pathHeight = 90.dp.toPx()
+                val petalY = startY + currentPetalProgress * pathHeight
+
+                if (petalY < groundY) {
+                    rotate(degrees = currentPetalProgress * 360f, pivot = Offset(petalX, petalY)) {
+                        drawOval(
+                            color = petalColor,
+                            topLeft = Offset(petalX - 3.dp.toPx(), petalY - 1.5f.dp.toPx()),
+                            size = Size(6.dp.toPx(), 3.dp.toPx())
+                        )
+                    }
+                }
+            }
         }
     }
 }
