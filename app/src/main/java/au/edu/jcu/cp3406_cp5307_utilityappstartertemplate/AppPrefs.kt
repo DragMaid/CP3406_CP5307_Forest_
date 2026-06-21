@@ -38,6 +38,39 @@ class AppPrefs(context: Context) {
     private val KEY_TIMER_IS_PAUSED = "timer_is_paused"
 
 
+    // Garden & Completed Sessions Persistence
+    fun loadGarden(): List<GardenTree> {
+        val data = prefs.getString(KEY_GARDEN, "") ?: ""
+        if (data.isBlank()) return emptyList()
+        return data.split(";").mapNotNull { entry ->
+            val parts = entry.split("|")
+            if (parts.size >= 4) {
+                GardenTree(
+                    species = TreeSpecies.fromString(parts[0]),
+                    completionDate = parts[1],
+                    totalFocusTimeMinutes = parts[2].toIntOrNull() ?: 0,
+                    pomodoroCycleIndex = parts[3].toIntOrNull() ?: 0
+                )
+            } else null
+        }
+    }
+
+    fun saveGarden(garden: List<GardenTree>) {
+        val serialized = garden.joinToString(";") {
+            "${it.species.name}|${it.completionDate}|${it.totalFocusTimeMinutes}|${it.pomodoroCycleIndex}"
+        }
+        prefs.edit().putString(KEY_GARDEN, serialized).apply()
+    }
+
+    fun loadCompletedSessions(): List<String> {
+        val data = prefs.getString(KEY_COMPLETED_SESSIONS, "") ?: ""
+        return if (data.isBlank()) emptyList() else data.split(";")
+    }
+
+    fun saveCompletedSessions(sessions: List<String>) {
+        prefs.edit().putString(KEY_COMPLETED_SESSIONS, sessions.joinToString(";")).apply()
+    }
+
     // Active Tree & Cycle Progress
     fun getCycleCompletedSessions(): Int = prefs.getInt(KEY_CYCLE_COMPLETED_SESSIONS, 0)
     fun saveCycleCompletedSessions(count: Int) = prefs.edit().putInt(KEY_CYCLE_COMPLETED_SESSIONS, count).apply()
