@@ -76,6 +76,32 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun startTimer() {
+        if (_isTimerRunning.value) return
+        _isTimerRunning.value = true
+        _isTimerPaused.value = false
+        
+        saveTimerState(isPaused = false)
+
+        timerJob = viewModelScope.launch {
+            while (_secondsRemaining.value > 0) {
+                delay(1000.milliseconds)
+                _secondsRemaining.value -= 1
+            }
+            onSessionComplete()
+        }
+    }
+
+    fun pauseTimer() {
+        timerJob?.cancel()
+        _isTimerRunning.value = false
+        _isTimerPaused.value = true
+        saveTimerState(isPaused = true)
+    }
+
+    fun resumeTimer() {
+        startTimer()
+    }
 
     fun cancelSession() {
         timerJob?.cancel()
