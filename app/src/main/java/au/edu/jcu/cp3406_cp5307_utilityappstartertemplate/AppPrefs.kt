@@ -38,6 +38,24 @@ class AppPrefs(context: Context) {
     private val KEY_TIMER_IS_PAUSED = "timer_is_paused"
 
 
+    fun saveSettings(settings: AppSettings) {
+        prefs.edit()
+            .putString(KEY_DISPLAY_NAME, settings.displayName)
+            .putString(KEY_THEME_MODE, settings.themeMode)
+            .putString(KEY_ACCENT_COLOR, settings.accentColor)
+            .putInt(KEY_FOCUS_DURATION, settings.focusDurationMinutes)
+            .putInt(KEY_SHORT_BREAK, settings.shortBreakDurationMinutes)
+            .putInt(KEY_LONG_BREAK, settings.longBreakDurationMinutes)
+            .putBoolean(KEY_AUTO_START_BREAK, settings.autoStartBreak)
+            .putBoolean(KEY_AUTO_START_FOCUS, settings.autoStartFocus)
+            .putBoolean(KEY_ENABLE_SOUNDS, settings.enableSounds)
+            .putBoolean(KEY_ENABLE_VIBRATION, settings.enableVibration)
+            .putInt(KEY_DAILY_FOCUS_GOAL, settings.dailyFocusGoalMinutes)
+            .putString(KEY_SPECIES_MODE, settings.speciesMode)
+            .putString(KEY_SELECTED_SPECIES, settings.selectedSpecies.name)
+            .apply()
+    }
+
     // Garden & Completed Sessions Persistence
     fun loadGarden(): List<GardenTree> {
         val data = prefs.getString(KEY_GARDEN, "") ?: ""
