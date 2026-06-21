@@ -49,6 +49,8 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
     val completedSessionsInCycle by viewModel.completedSessionsInCycle.collectAsState()
     val activeTreeSpecies by viewModel.activeTreeSpecies.collectAsState()
     val completedDates by viewModel.completedSessionDates.collectAsState()
+    val weather by viewModel.weatherCondition.collectAsState()
+    val isFetchingWeather by viewModel.isFetchingWeather.collectAsState()
 
     val totalSeconds = when (sessionType) {
         SessionType.FOCUS -> settings.focusDurationMinutes * 60L
@@ -80,6 +82,13 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
+        )
+
+        // Weather Widget Showcase
+        WeatherWidget(
+            weather = weather,
+            isFetching = isFetchingWeather,
+            onFetchWeather = { viewModel.fetchWeather() }
         )
 
         // Session Type Header
@@ -134,7 +143,8 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
         ) {
             TreeCanvas(
                 species = activeTreeSpecies,
-                stage = if (sessionType == SessionType.FOCUS) currentStage else TreeStage.MATURE
+                stage = if (sessionType == SessionType.FOCUS) currentStage else TreeStage.MATURE,
+                weather = weather
             )
         }
 
@@ -956,6 +966,40 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
                 modifier = Modifier.padding(top = 8.dp)
             ) {
                 Text("Settings saved successfully!")
+            }
+        }
+    }
+}
+
+@Composable
+fun WeatherWidget(
+    weather: WeatherCondition,
+    isFetching: Boolean,
+    onFetchWeather: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("Weather", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(weather.displayName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            }
+
+            if (isFetching) {
+                CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+            } else {
+                Button(onClick = onFetchWeather, shape = RoundedCornerShape(10.dp)) {
+                    Text("Refresh")
+                }
             }
         }
     }
