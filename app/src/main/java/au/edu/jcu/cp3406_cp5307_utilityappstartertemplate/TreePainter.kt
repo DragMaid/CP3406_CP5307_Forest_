@@ -45,6 +45,113 @@ fun TreeCanvas(
         // Sway pivot point is the base of the trunk at the ground level
         val pivot = Offset(centerX, groundY)
 
+        rotate(degrees = if (stage == TreeStage.SEED) 0f else swayAngle, pivot = pivot) {
+            when (stage) {
+                TreeStage.SEED -> {
+                    // Draw a cute little seed in the soil
+                    drawOval(
+                        color = Color(0xFF8D6E63),
+                        topLeft = Offset(centerX - 10.dp.toPx(), groundY - 8.dp.toPx()),
+                        size = Size(20.dp.toPx(), 12.dp.toPx())
+                    )
+                    // Highlight on the seed
+                    drawOval(
+                        color = Color(0xFFA1887F),
+                        topLeft = Offset(centerX - 6.dp.toPx(), groundY - 7.dp.toPx()),
+                        size = Size(10.dp.toPx(), 6.dp.toPx())
+                    )
+                }
+
+                TreeStage.SPROUT -> {
+                    // Draw a small green stem
+                    val stemPath = Path().apply {
+                        moveTo(centerX, groundY)
+                        cubicTo(
+                            centerX, groundY - 15.dp.toPx(),
+                            centerX + 8.dp.toPx(), groundY - 25.dp.toPx(),
+                            centerX + 12.dp.toPx(), groundY - 35.dp.toPx()
+                        )
+                    }
+                    androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx()).let { stroke ->
+                        drawPath(path = stemPath, color = Color(0xFF81C784), style = stroke)
+                    }
+
+                    // Two tiny leaves
+                    drawOval(
+                        color = Color(0xFF4CAF50),
+                        topLeft = Offset(centerX + 10.dp.toPx(), groundY - 38.dp.toPx()),
+                        size = Size(12.dp.toPx(), 6.dp.toPx())
+                    )
+                    drawOval(
+                        color = Color(0xFF4CAF50),
+                        topLeft = Offset(centerX + 2.dp.toPx(), groundY - 32.dp.toPx()),
+                        size = Size(8.dp.toPx(), 5.dp.toPx())
+                    )
+                }
+
+                TreeStage.YOUNG_TREE -> {
+                    // Thin trunk
+                    val trunkWidth = 6.dp.toPx()
+                    val trunkHeight = 40.dp.toPx()
+                    val trunkColor = if (species == TreeSpecies.BIRCH) Color(0xFFEEEEEE) else Color(0xFF5D4037)
+                    
+                    drawRect(
+                        color = trunkColor,
+                        topLeft = Offset(centerX - trunkWidth / 2, groundY - trunkHeight),
+                        size = Size(trunkWidth, trunkHeight)
+                    )
+                    if (species == TreeSpecies.BIRCH) {
+                        // Birch bark lines
+                        drawLine(Color(0xFF333333), Offset(centerX - trunkWidth/2, groundY - 15.dp.toPx()), Offset(centerX, groundY - 15.dp.toPx()), strokeWidth = 1.dp.toPx())
+                        drawLine(Color(0xFF333333), Offset(centerX, groundY - 30.dp.toPx()), Offset(centerX + trunkWidth/2, groundY - 30.dp.toPx()), strokeWidth = 1.dp.toPx())
+                    }
+
+                    // Small foliage canopy
+                    val canopyColor = when (species) {
+                        TreeSpecies.OAK -> Color(0xFF388E3C)
+                        TreeSpecies.PINE -> Color(0xFF1B5E20)
+                        TreeSpecies.CHERRY_BLOSSOM -> Color(0xFFF48FB1)
+                        TreeSpecies.MAPLE -> Color(0xFFE64A19)
+                        TreeSpecies.BIRCH -> Color(0xFF81C784)
+                    }
+                    drawCircle(
+                        color = canopyColor,
+                        radius = 24.dp.toPx(),
+                        center = Offset(centerX, groundY - trunkHeight - 10.dp.toPx())
+                    )
+                }
+
+                TreeStage.NEARLY_MATURE -> {
+                    // Medium trunk
+                    val trunkWidth = 10.dp.toPx()
+                    val trunkHeight = 60.dp.toPx()
+                    val trunkColor = if (species == TreeSpecies.BIRCH) Color(0xFFEEEEEE) else Color(0xFF5D4037)
+
+                    drawRect(
+                        color = trunkColor,
+                        topLeft = Offset(centerX - trunkWidth / 2, groundY - trunkHeight),
+                        size = Size(trunkWidth, trunkHeight)
+                    )
+                    if (species == TreeSpecies.BIRCH) {
+                        // Birch lines
+                        drawLine(Color(0xFF333333), Offset(centerX - trunkWidth/2, groundY - 15.dp.toPx()), Offset(centerX + 2.dp.toPx(), groundY - 15.dp.toPx()), strokeWidth = 1.5f.dp.toPx())
+                        drawLine(Color(0xFF333333), Offset(centerX - 2.dp.toPx(), groundY - 35.dp.toPx()), Offset(centerX + trunkWidth/2, groundY - 35.dp.toPx()), strokeWidth = 1.5f.dp.toPx())
+                        drawLine(Color(0xFF333333), Offset(centerX - trunkWidth/2, groundY - 50.dp.toPx()), Offset(centerX, groundY - 50.dp.toPx()), strokeWidth = 1.5f.dp.toPx())
+                    }
+
+                    // Branch lines
+                    drawLine(trunkColor, Offset(centerX, groundY - 45.dp.toPx()), Offset(centerX - 15.dp.toPx(), groundY - 55.dp.toPx()), strokeWidth = 4.dp.toPx())
+                    drawLine(trunkColor, Offset(centerX, groundY - 40.dp.toPx()), Offset(centerX + 15.dp.toPx(), groundY - 52.dp.toPx()), strokeWidth = 4.dp.toPx())
+
+                    // Overlapping circles for dense foliage
+                    val foliageColor = when (species) {
+                        TreeSpecies.OAK -> Color(0xFF2E7D32)
+                        TreeSpecies.PINE -> Color(0xFF1B5E20)
+                        TreeSpecies.CHERRY_BLOSSOM -> Color(0xFFF06292)
+                        TreeSpecies.MAPLE -> Color(0xFFD84315)
+                        TreeSpecies.BIRCH -> Color(0xFF66BB6A)
+                    }
+
                     if (species == TreeSpecies.PINE) {
                         // Pine triangles
                         val path = Path().apply {
