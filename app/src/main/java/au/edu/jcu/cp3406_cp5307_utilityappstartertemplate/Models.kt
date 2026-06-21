@@ -55,7 +55,9 @@ data class AppSettings(
     val enableVibration: Boolean = true,
     val dailyFocusGoalMinutes: Int = 100,
     val speciesMode: String = "Random", // Random, Seasonal, Manual
-    val selectedSpecies: TreeSpecies = TreeSpecies.OAK
+    val selectedSpecies: TreeSpecies = TreeSpecies.OAK,
+    val selectedWeather: WeatherCondition = WeatherCondition.SUNNY,
+    val weatherMode: String = "Manual" // Manual or Real-time
 )
 
 data class GardenTree(
@@ -64,3 +66,11 @@ data class GardenTree(
     val totalFocusTimeMinutes: Int,
     val pomodoroCycleIndex: Int // running total of completed cycles
 )
+
+enum class WeatherCondition(val displayName: String) {
+    SUNNY("Sunny"),
+    CLOUDY("Cloudy"),
+    RAINY("Rainy"),
+    WINDY("Windy"),
+    STORM("Storm")
+}

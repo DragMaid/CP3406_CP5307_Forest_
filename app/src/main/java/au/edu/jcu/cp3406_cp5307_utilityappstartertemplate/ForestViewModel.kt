@@ -8,6 +8,9 @@ import android.os.Vibrator
 import android.media.RingtoneManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import au.edu.jcu.cp3406_cp5307_utilityappstartertemplate.data.location.LocationRepository
+import au.edu.jcu.cp3406_cp5307_utilityappstartertemplate.data.weather.WeatherRepository
+import au.edu.jcu.cp3406_cp5307_utilityappstartertemplate.network.NetworkModule
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,7 +62,18 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
     private val _completedSessionDates = MutableStateFlow(prefs.loadCompletedSessions())
     val completedSessionDates = _completedSessionDates.asStateFlow()
 
+    // Weather State
+    private val _weatherCondition = MutableStateFlow(WeatherCondition.SUNNY)
+    val weatherCondition = _weatherCondition.asStateFlow()
+
+    private val _isFetchingWeather = MutableStateFlow(false)
+    val isFetchingWeather = _isFetchingWeather.asStateFlow()
+
     private var timerJob: Job? = null
+    private var weatherPollingJob: Job? = null
+    // Repositories
+    private val locationRepo = LocationRepository(application)
+    private val weatherRepo = WeatherRepository(NetworkModule.createOpenMeteoApi())
 
     init {
         // Automatically set up active tree species if it hasn't been set yet
@@ -74,6 +88,35 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
         if (!_isTimerRunning.value && !_isTimerPaused.value) {
             resetTimerToCurrentSession()
         }
+
+        // Observe weatherMode settings and start/stop polling accordingly
+        viewModelScope.launch {
+            var lastMode = _settings.value.weatherMode
+            if (lastMode == "Real-time") startWeatherPolling()
+            _settings.collect { s ->
+                if (s.weatherMode != lastMode) {
+                    lastMode = s.weatherMode
+                    if (lastMode == "Real-time") startWeatherPolling() else stopWeatherPolling()
+                }
+            }
+        }
+    }
+
+    private fun startWeatherPolling() {
+        stopWeatherPolling()
+        weatherPollingJob = viewModelScope.launch {
+            // Initial fetch
+            fetchWeatherInternal(forceRefresh = true)
+            while (true) {
+                delay(5 * 60 * 1000L)
+                fetchWeatherInternal(forceRefresh = true)
+            }
+        }
+    }
+
+    private fun stopWeatherPolling() {
+        weatherPollingJob?.cancel()
+        weatherPollingJob = null
     }
 
     fun startTimer() {
@@ -111,6 +154,15 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
         // ponytail: Cancelling a focus session does not advance the tree (requirement met)
         resetTimerToCurrentSession()
         prefs.saveTimerState(null)
+    }
+
+    fun skipFocusSession() {
+        if (_sessionType.value == SessionType.FOCUS) {
+            timerJob?.cancel()
+            _isTimerRunning.value = false
+            _isTimerPaused.value = false
+            onSessionComplete()
+        }
     }
 
     private fun onSessionComplete() {
@@ -413,5 +465,75 @@ class ForestViewModel(application: Application) : AndroidViewModel(application) 
         val daysBetween = (diffMs / (1000 * 60 * 60 * 24)) + 1
 
         return dates.size.toDouble() / daysBetween
+    }
+
+    fun fetchWeather() {
+        fetchWeatherInternal(forceRefresh = false)
+    }
+
+    /**
+     * Attempt to fetch real-time weather using device location.
+     * For now this falls back to the simulated fetchWeather() when location
+     * access isn't available — keeps behaviour safe for builds without
+     * runtime permission handling. If location and network are available,
+     * one could plug in a real API call here.
+     */
+    fun fetchWeatherRealTime() {
+        fetchWeatherInternal(forceRefresh = true)
+    }
+
+    private fun fetchWeatherInternal(forceRefresh: Boolean) {
+        if (_isFetchingWeather.value) return
+        _isFetchingWeather.value = true
+
+        viewModelScope.launch {
+            try {
+                // Attempt to reuse cached value first
+                val cached = weatherRepo.getCached()
+                if (cached != null && !forceRefresh) {
+                    _weatherCondition.value = cached
+                    return@launch
+                }
+
+                // Obtain last-known location (may throw if permissions missing)
+                val loc = try {
+                    locationRepo.getCurrentLocation()
+                } catch (ex: SecurityException) {
+                    null
+                } catch (ex: Exception) {
+                    null
+                }
+
+                if (loc == null) {
+                    // Nothing to do; keep previous weather and bail out
+                    return@launch
+                }
+
+                val cond = weatherRepo.fetchWeather(loc.latitude, loc.longitude, forceRefresh)
+                if (cond != null) {
+                    _weatherCondition.value = cond
+                    // persist user-chosen weather preference so settings reflect it
+                    val updated = _settings.value.copy(selectedWeather = cond)
+                    _settings.value = updated
+                    prefs.saveSettings(updated)
+                }
+            } finally {
+                _isFetchingWeather.value = false
+            }
+        }
+    }
+
+    fun setWeather(condition: WeatherCondition) {
+        _weatherCondition.value = condition
+    }
+
+    /**
+     * Skip the current session (works for both focus and break sessions).
+     */
+    fun skipCurrentSession() {
+        timerJob?.cancel()
+        _isTimerRunning.value = false
+        _isTimerPaused.value = false
+        onSessionComplete()
     }
 }
