@@ -5,11 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -37,6 +34,8 @@ import androidx.compose.ui.graphics.Color
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
+import kotlin.math.cos
+import kotlin.math.sin
 
 // Note: Using text labels instead of emojis for accessibility and clarity.
 
@@ -52,14 +51,7 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
     val activeTreeSpecies by viewModel.activeTreeSpecies.collectAsState()
     val completedDates by viewModel.completedSessionDates.collectAsState()
     val weather by viewModel.weatherCondition.collectAsState()
-    val isFetchingWeather by viewModel.isFetchingWeather.collectAsState()
 
-    val totalSeconds = when (sessionType) {
-        SessionType.FOCUS -> settings.focusDurationMinutes * 60L
-        SessionType.SHORT_BREAK -> settings.shortBreakDurationMinutes * 60L
-        SessionType.LONG_BREAK -> settings.longBreakDurationMinutes * 60L
-    }
-    
     // progress ring removed; compute display time for overlay
     val mins = secondsRemaining / 60
     val secs = secondsRemaining % 60
@@ -267,7 +259,7 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
 fun GardenScreen(viewModel: ForestViewModel) {
     val garden by viewModel.garden.collectAsState()
     
-    // Sort state removed; simplified view to prioritise grid visibility
+    // Sort state removed; simplified view to prioritize grid visibility
     var selectedDetailTree by remember { mutableStateOf<GardenTree?>(null) }
     var showEmptyPlotDialog by remember { mutableStateOf(false) }
 
@@ -317,8 +309,6 @@ fun GardenScreen(viewModel: ForestViewModel) {
                 }
             }
         }
-
-        // Filters removed to prioritise a denser grid layout
 
         // Processed list of garden trees
         val filteredAndSortedTrees = remember(garden) { garden.toList().sortedByDescending { it.completionDate } }
@@ -487,8 +477,8 @@ fun GardenPlot(
                     // Petals
                     for (angle in 0 until 360 step 72) {
                         val rad = Math.toRadians(angle.toDouble())
-                        val px = cx + (5.dp.toPx() * Math.cos(rad)).toFloat()
-                        val py = cy + (5.dp.toPx() * Math.sin(rad)).toFloat()
+                        val px = cx + (5.dp.toPx() * cos(rad)).toFloat()
+                        val py = cy + (5.dp.toPx() * sin(rad)).toFloat()
                         drawCircle(Color.White.copy(alpha = 0.9f), radius = 2.5f.dp.toPx(), center = Offset(px, py))
                     }
                     // Grass blades
@@ -559,8 +549,6 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
     var selectedWeather by remember { mutableStateOf(currentSettings.selectedWeather) }
     var weatherMode by remember { mutableStateOf(currentSettings.weatherMode) }
 
-    var saveSuccessMessage by remember { mutableStateOf(false) }
-
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
         val fine = perms[android.Manifest.permission.ACCESS_FINE_LOCATION] == true
         val coarse = perms[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
@@ -568,16 +556,22 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
             viewModel.fetchWeatherRealTime()
         }
     }
+    // Derived validation values for form fields (kept in outer scope so UI can react)
+    val focusDurationVal = focusDuration.toIntOrNull()
+    val shortBreakVal = shortBreak.toIntOrNull()
+    val longBreakVal = longBreak.toIntOrNull()
+    val dailyGoalVal = dailyGoal.toIntOrNull()
+
+    val isFocusValid = focusDurationVal != null && focusDurationVal >= 25
+    val isBreakValid = shortBreakVal != null && longBreakVal != null && (shortBreakVal in 1 until longBreakVal)
+    val isGoalValid = dailyGoalVal != null && dailyGoalVal > 0
+
     // Helper to apply settings immediately when inputs are valid
     fun applySettingsIfValid() {
-        val focusDurationVal = focusDuration.toIntOrNull() ?: return
-        val shortBreakVal = shortBreak.toIntOrNull() ?: return
-        val longBreakVal = longBreak.toIntOrNull() ?: return
-        val dailyGoalVal = dailyGoal.toIntOrNull() ?: return
-
-        val isFocusValid = focusDurationVal >= 25
-        val isBreakValid = shortBreakVal in 1 until longBreakVal
-        val isGoalValid = dailyGoalVal > 0
+        val fVal = focusDurationVal ?: return
+        val sVal = shortBreakVal ?: return
+        val lVal = longBreakVal ?: return
+        val dVal = dailyGoalVal ?: return
 
         if (!isFocusValid || !isBreakValid || !isGoalValid) return
 
@@ -585,14 +579,14 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
             displayName = displayName,
             themeMode = themeMode,
             accentColor = accentColor,
-            focusDurationMinutes = focusDurationVal,
-            shortBreakDurationMinutes = shortBreakVal,
-            longBreakDurationMinutes = longBreakVal,
+            focusDurationMinutes = fVal,
+            shortBreakDurationMinutes = sVal,
+            longBreakDurationMinutes = lVal,
             autoStartBreak = autoStartBreak,
             autoStartFocus = autoStartFocus,
             enableSounds = enableSounds,
             enableVibration = enableVibration,
-            dailyFocusGoalMinutes = dailyGoalVal,
+            dailyFocusGoalMinutes = dVal,
             speciesMode = speciesMode,
             selectedSpecies = selectedSpecies,
             selectedWeather = selectedWeather,
@@ -931,27 +925,5 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
             }
         }
         // Note: Settings apply immediately as user changes inputs.
-    }
-}
-
-@Composable
-fun WeatherWidget(
-    weather: WeatherCondition,
-    isFetching: Boolean
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-    ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text("Weather", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                Text(weather.displayName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            }
-            if (isFetching) {
-                CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
-            }
-        }
     }
 }
