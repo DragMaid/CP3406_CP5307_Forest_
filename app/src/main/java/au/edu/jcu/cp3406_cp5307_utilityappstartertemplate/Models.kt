@@ -64,3 +64,11 @@ data class GardenTree(
     val totalFocusTimeMinutes: Int,
     val pomodoroCycleIndex: Int // running total of completed cycles
 )
+
+enum class WeatherCondition(val displayName: String) {
+    SUNNY("Sunny"),
+    CLOUDY("Cloudy"),
+    RAINY("Rainy"),
+    WINDY("Windy"),
+    STORM("Storm")
+}
