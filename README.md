@@ -9,6 +9,12 @@
 
 100% Kotlin. 100% Jetpack Compose. 100% hand-drawn `Canvas` art — not a single PNG in sight.
 
+<p align="center">
+  <img src="assets/screen_1.png" alt="Screen 1" width="30%" />
+  <img src="assets/screen_2.png" alt="Screen 2" width="30%" />
+  <img src="assets/screen_3.png" alt="Screen 3" width="30%" />
+</p>
+
 ---
 
 ## Quickstart
