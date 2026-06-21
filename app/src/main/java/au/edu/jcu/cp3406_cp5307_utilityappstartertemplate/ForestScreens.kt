@@ -89,12 +89,6 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
             fontWeight = FontWeight.Bold
         )
 
-        // Weather Widget Showcase (display only; selection moved to Settings)
-        WeatherWidget(
-            weather = weather,
-            isFetching = isFetchingWeather
-        )
-
         // Session Type Header
         Card(
             colors = CardDefaults.cardColors(
@@ -574,18 +568,43 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
             viewModel.fetchWeatherRealTime()
         }
     }
+    // Helper to apply settings immediately when inputs are valid
+    fun applySettingsIfValid() {
+        val focusDurationVal = focusDuration.toIntOrNull() ?: return
+        val shortBreakVal = shortBreak.toIntOrNull() ?: return
+        val longBreakVal = longBreak.toIntOrNull() ?: return
+        val dailyGoalVal = dailyGoal.toIntOrNull() ?: return
 
-    // Validation Results
-    val focusDurationVal = focusDuration.toIntOrNull() ?: 0
-    val shortBreakVal = shortBreak.toIntOrNull() ?: 0
-    val longBreakVal = longBreak.toIntOrNull() ?: 0
-    val dailyGoalVal = dailyGoal.toIntOrNull() ?: 0
+        val isFocusValid = focusDurationVal >= 25
+        val isBreakValid = shortBreakVal in 1 until longBreakVal
+        val isGoalValid = dailyGoalVal > 0
 
-    val isFocusValid = focusDurationVal >= 25
-    val isBreakValid = shortBreakVal in 1..<longBreakVal
-    val isGoalValid = dailyGoalVal > 0
-    
-    val isFormValid = isFocusValid && isBreakValid && isGoalValid
+        if (!isFocusValid || !isBreakValid || !isGoalValid) return
+
+        val updated = AppSettings(
+            displayName = displayName,
+            themeMode = themeMode,
+            accentColor = accentColor,
+            focusDurationMinutes = focusDurationVal,
+            shortBreakDurationMinutes = shortBreakVal,
+            longBreakDurationMinutes = longBreakVal,
+            autoStartBreak = autoStartBreak,
+            autoStartFocus = autoStartFocus,
+            enableSounds = enableSounds,
+            enableVibration = enableVibration,
+            dailyFocusGoalMinutes = dailyGoalVal,
+            speciesMode = speciesMode,
+            selectedSpecies = selectedSpecies,
+            selectedWeather = selectedWeather,
+            weatherMode = weatherMode
+        )
+
+        viewModel.updateSettings(updated)
+
+        if (weatherMode == "Real-time") {
+            permissionLauncher.launch(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION))
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -796,6 +815,8 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
                         DropdownMenuItem(text = { Text(mode) }, onClick = {
                             weatherMode = mode
                             weatherModeExpanded = false
+                            // apply immediately when switching mode
+                            applySettingsIfValid()
                         })
                     }
                 }
@@ -803,26 +824,29 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Selected weather (manual selection)
-            var weatherExpanded by remember { mutableStateOf(false) }
-            Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = selectedWeather.displayName,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Selected Weather") },
-                    trailingIcon = {
-                        IconButton(onClick = { weatherExpanded = true }) { Icon(Icons.Default.Info, contentDescription = "Choose Weather") }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                DropdownMenu(expanded = weatherExpanded, onDismissRequest = { weatherExpanded = false }) {
-                    listOf(WeatherCondition.SUNNY, WeatherCondition.CLOUDY, WeatherCondition.RAINY, WeatherCondition.WINDY, WeatherCondition.STORM).forEach { w ->
-                        DropdownMenuItem(text = { Text(w.displayName) }, onClick = {
-                            selectedWeather = w
-                            viewModel.setWeather(w)
-                            weatherExpanded = false
-                        })
+            // Selected weather (manual selection) - hidden when real-time mode is active
+            if (weatherMode != "Real-time") {
+                var weatherExpanded by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = selectedWeather.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Selected Weather") },
+                        trailingIcon = {
+                            IconButton(onClick = { weatherExpanded = true }) { Icon(Icons.Default.Info, contentDescription = "Choose Weather") }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    DropdownMenu(expanded = weatherExpanded, onDismissRequest = { weatherExpanded = false }) {
+                        listOf(WeatherCondition.SUNNY, WeatherCondition.CLOUDY, WeatherCondition.RAINY, WeatherCondition.WINDY, WeatherCondition.STORM).forEach { w ->
+                            DropdownMenuItem(text = { Text(w.displayName) }, onClick = {
+                                selectedWeather = w
+                                viewModel.setWeather(w)
+                                weatherExpanded = false
+                                applySettingsIfValid()
+                            })
+                        }
                     }
                 }
             }
@@ -841,10 +865,9 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
 
                 OutlinedTextField(
                     value = dailyGoal,
-                    onValueChange = { dailyGoal = it },
+                    onValueChange = { dailyGoal = it; applySettingsIfValid() },
                     label = { Text("Daily Focus Goal (minutes)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = !isGoalValid,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -869,6 +892,7 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
                                 onClick = {
                                     speciesMode = mode
                                     speciesModeExpanded = false
+                                    applySettingsIfValid()
                                 }
                             )
                         }
@@ -897,6 +921,7 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
                                     onClick = {
                                         selectedSpecies = species
                                         treeSpeciesExpanded = false
+                                        applySettingsIfValid()
                                     }
                                 )
                             }
@@ -905,55 +930,7 @@ fun SettingsFormScreen(viewModel: ForestViewModel) {
                 }
             }
         }
-
-        // Action Button
-        Button(
-            onClick = {
-                if (isFormValid) {
-                    val updated = AppSettings(
-                        displayName = displayName,
-                        themeMode = themeMode,
-                        accentColor = accentColor,
-                        focusDurationMinutes = focusDurationVal,
-                        shortBreakDurationMinutes = shortBreakVal,
-                        longBreakDurationMinutes = longBreakVal,
-                        autoStartBreak = autoStartBreak,
-                        autoStartFocus = autoStartFocus,
-                        enableSounds = enableSounds,
-                        enableVibration = enableVibration,
-                        dailyFocusGoalMinutes = dailyGoalVal,
-                        speciesMode = speciesMode,
-                        selectedSpecies = selectedSpecies,
-                        selectedWeather = selectedWeather,
-                        weatherMode = weatherMode
-                    )
-                    viewModel.updateSettings(updated)
-                    // If user chose Real-time, request location permissions to trigger initial fetch
-                    if (weatherMode == "Real-time") {
-                        permissionLauncher.launch(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION))
-                    }
-                    saveSuccessMessage = true
-                }
-            },
-            enabled = isFormValid,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("Save Settings", fontWeight = FontWeight.Bold)
-        }
-
-        if (saveSuccessMessage) {
-            Snackbar(
-                action = {
-                    TextButton(onClick = { saveSuccessMessage = false }) {
-                        Text("Dismiss", color = MaterialTheme.colorScheme.inverseOnSurface)
-                    }
-                },
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Settings saved successfully!")
-            }
-        }
+        // Note: Settings apply immediately as user changes inputs.
     }
 }
 
