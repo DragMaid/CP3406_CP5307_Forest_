@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
 
-// ponytail: Compose UI built using standard layout elements and icons. Emojis replace icon resources for simplicity.
+// Note: Using text labels instead of emojis for accessibility and clarity.
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -140,11 +140,11 @@ fun ForestTimerScreen(viewModel: ForestViewModel) {
         ) {
             for (i in 0..3) {
                 val symbol = when {
-                    i < completedSessionsInCycle -> "🌳"
-                    i == completedSessionsInCycle && sessionType == SessionType.FOCUS && isRunning -> "🌱"
-                    else -> "⚪"
+                    i < completedSessionsInCycle -> "Tree"
+                    i == completedSessionsInCycle && sessionType == SessionType.FOCUS && isRunning -> "Growing"
+                    else -> "Empty"
                 }
-                Text(text = symbol, fontSize = 24.sp)
+                Text(text = symbol, fontSize = 18.sp)
             }
         }
 
